@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BasketIQ — Market Basket Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #F7F4EF;
+  --surface: #FFFFFF;
+  --surface2: #F0EDE7;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --text: #1A1714;
+  --text2: #6B6560;
+  --text3: #9B948E;
+  --accent: #2D5BE3;
+  --accent-light: #EEF2FD;
+  --accent-dark: #1A3FAF;
+  --green: #1A7A4A;
+  --green-bg: #E8F5EE;
+  --amber: #9A6000;
+  --amber-bg: #FEF3DC;
+  --red: #C0392B;
+  --red-bg: #FDEDEB;
+  --tag-dairy: #EEF2FD; --tag-dairy-t: #1A3FAF;
+  --tag-produce: #E8F5EE; --tag-produce-t: #1A7A4A;
+  --tag-bakery: #FEF3DC; --tag-bakery-t: #9A6000;
+  --tag-beverage: #F3EDFD; --tag-beverage-t: #5B2D9A;
+  --tag-meat: #FDEDEB; --tag-meat-t: #C0392B;
+  --tag-other: #F0EDE7; --tag-other-t: #6B6560;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.10);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────────── */
+.shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+.sidebar {
+  background: var(--text);
+  color: #fff;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.logo-area {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.logo span { color: #7EA3FF; }
+.logo-sub { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+.nav { padding: 16px 12px; flex: 1; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: rgba(255,255,255,0.65);
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  border: none; background: none; width: 100%; text-align: left;
+}
+
+.nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(126,163,255,0.18); color: #7EA3FF; font-weight: 500; }
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+.sidebar-stats {
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+
+.stat-pill {
+  background: rgba(255,255,255,0.07);
+  border-radius: 8px; padding: 10px 12px;
+}
+
+.stat-pill .sv { font-size: 18px; font-weight: 600; color: #fff; }
+.stat-pill .sl { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; }
+
+.main { padding: 32px 36px; overflow-y: auto; }
+
+/* ─── HEADER ─────────────────────────────────────────── */
+.page-header { margin-bottom: 28px; }
+.page-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); letter-spacing: -0.5px; }
+.page-subtitle { font-size: 14px; color: var(--text2); margin-top: 4px; }
+
+/* ─── PANELS ─────────────────────────────────────────── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ─── CARDS ─────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+}
+
+.card-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px; }
+.card-h { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.card-sub { font-size: 13px; color: var(--text2); }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 20px; }
+.grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+
+/* ─── METRICS ─────────────────────────────────────────── */
+.metric-card {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+
+.metric-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; }
+.metric-val { font-family: 'DM Serif Display', serif; font-size: 30px; color: var(--text); line-height: 1.1; margin: 4px 0 2px; }
+.metric-sub { font-size: 12px; color: var(--green); display: flex; align-items: center; gap: 3px; }
+
+/* ─── SHOP PANEL ─────────────────────────────────────── */
+.shop-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+
+.search-bar {
+  display: flex; align-items: center;
+  background: var(--surface); border: 1.5px solid var(--border-md);
+  border-radius: 10px; padding: 0 14px;
+  margin-bottom: 20px; gap: 10px;
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s;
+}
+
+.search-bar:focus-within { border-color: var(--accent); }
+.search-icon { color: var(--text3); font-size: 16px; }
+
+.search-bar input {
+  flex: 1; border: none; outline: none; padding: 12px 0;
+  font-family: 'DM Sans', sans-serif; font-size: 15px;
+  background: transparent; color: var(--text);
+}
+
+.filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+
+.ftab {
+  padding: 6px 14px; border-radius: 999px; font-size: 13px;
+  border: 1px solid var(--border-md); background: var(--surface);
+  cursor: pointer; color: var(--text2); font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+
+.ftab:hover { border-color: var(--accent); color: var(--accent); }
+.ftab.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 500; }
+
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+
+.product-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 12px;
+  text-align: center; cursor: pointer;
+  transition: all 0.15s; user-select: none;
+}
+
+.product-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.product-card.in-cart { border-color: var(--accent); background: var(--accent-light); }
+.product-card.in-cart .pc-name { color: var(--accent-dark); }
+
+.pc-icon { font-size: 28px; margin-bottom: 6px; }
+.pc-name { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.3; }
+.pc-price { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+.cat-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+/* ─── CART ─────────────────────────────────────────── */
+.cart-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 20px; position: sticky; top: 24px;
+}
+
+.cart-title { font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.cart-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+.cart-items { min-height: 80px; margin-bottom: 16px; }
+.cart-empty { text-align: center; color: var(--text3); font-size: 13px; padding: 24px 0; }
+
+.cart-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+
+.cart-item:last-child { border-bottom: none; }
+.ci-icon { font-size: 20px; }
+.ci-info { flex: 1; }
+.ci-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.ci-price { font-size: 11px; color: var(--text3); }
+.ci-remove { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 2px 4px; border-radius: 4px; transition: all 0.1s; }
+.ci-remove:hover { color: var(--red); background: var(--red-bg); }
+
+.cart-total { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: var(--text); padding-top: 12px; border-top: 1.5px solid var(--border-md); margin-bottom: 14px; }
+
+.btn-primary {
+  width: 100%; padding: 12px; border-radius: var(--radius-sm);
+  background: var(--accent); color: #fff; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600; border: none; cursor: pointer;
+  transition: all 0.15s; letter-spacing: 0.2px;
+}
+
+.btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(45,91,227,0.3); }
+.btn-primary:disabled { background: var(--text3); cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-secondary {
+  width: 100%; padding: 10px; border-radius: var(--radius-sm);
+  background: transparent; color: var(--text2); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; border: 1px solid var(--border-md); cursor: pointer;
+  transition: all 0.15s; margin-top: 8px;
+}
+
+.btn-secondary:hover { border-color: var(--text); color: var(--text); }
+
+/* ─── RECOMMENDATIONS ─────────────────────────────────── */
+.rec-section { margin-top: 20px; }
+.rec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.rec-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.rec-count { font-size: 12px; color: var(--text3); background: var(--surface2); padding: 3px 10px; border-radius: 999px; }
+
+.rec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+
+.rec-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 16px 12px;
+  text-align: center; position: relative; transition: all 0.2s;
+  animation: slideIn 0.3s ease both;
+  cursor: pointer;
+}
+
+.rec-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--accent); }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.rec-card:nth-child(2) { animation-delay: 0.05s; }
+.rec-card:nth-child(3) { animation-delay: 0.10s; }
+.rec-card:nth-child(4) { animation-delay: 0.15s; }
+.rec-card:nth-child(5) { animation-delay: 0.20s; }
+.rec-card:nth-child(6) { animation-delay: 0.25s; }
+
+.rec-badge {
+  position: absolute; top: 8px; right: 8px;
+  font-size: 10px; font-weight: 700; padding: 2px 7px;
+  border-radius: 999px; letter-spacing: 0.3px;
+}
+
+.badge-high { background: var(--green-bg); color: var(--green); }
+.badge-med { background: var(--amber-bg); color: var(--amber); }
+.badge-low { background: var(--surface2); color: var(--text3); }
+
+.rec-icon { font-size: 30px; margin-bottom: 8px; }
+.rec-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px; line-height: 1.3; }
+.rec-metrics { font-size: 11px; color: var(--text3); }
+.rec-lift { font-size: 12px; font-weight: 600; color: var(--accent); margin-top: 3px; }
+
+.add-rec-btn {
+  margin-top: 8px; padding: 5px 12px;
+  background: var(--accent-light); color: var(--accent);
+  border: 1px solid rgba(45,91,227,0.2); border-radius: 6px;
+  font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'DM Sans',sans-serif;
+  transition: all 0.15s;
+}
+
+.add-rec-btn:hover { background: var(--accent); color: #fff; }
+
+/* ─── TOAST ─────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 28px; right: 28px;
+  background: var(--text); color: #fff;
+  padding: 12px 20px; border-radius: 10px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  transform: translateY(80px); opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 999; max-width: 320px;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: var(--green); }
+.toast.info { background: var(--accent); }
+
+/* ─── RULES TABLE ─────────────────────────────────────── */
+.rules-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+
+.ctrl-group { display: flex; flex-direction: column; gap: 5px; }
+.ctrl-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); display: flex; justify-content: space-between; }
+.ctrl-val { color: var(--accent); }
+
+input[type=range] {
+  -webkit-appearance: none; width: 140px; height: 4px;
+  background: var(--border-md); border-radius: 2px; outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--accent); cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(45,91,227,0.15);
+}
+
+.table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); border-bottom: 1.5px solid var(--border-md); white-space: nowrap; }
+tbody td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--bg); }
+
+.arrow { color: var(--accent); font-weight: 700; font-size: 14px; }
+.tag { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+
+.lift-indicator { display: flex; align-items: center; gap: 8px; }
+.lift-bar-bg { flex: 1; height: 5px; background: var(--border-md); border-radius: 3px; min-width: 60px; }
+.lift-bar-fill { height: 5px; border-radius: 3px; background: var(--accent); }
+
+.conf-ring { position: relative; width: 36px; height: 36px; }
+
+/* ─── LOG ─────────────────────────────────────────── */
+.algo-log {
+  background: #1A1714; border-radius: var(--radius-sm);
+  padding: 16px; font-family: 'DM Mono', 'Courier New', monospace;
+  font-size: 12px; max-height: 200px; overflow-y: auto;
+  color: rgba(255,255,255,0.6); line-height: 1.7;
+  margin-top: 16px;
+}
+
+.log-ok { color: #5ED48A; }
+.log-info { color: #7EA3FF; }
+.log-warn { color: #F5CA6E; }
+.log-new { color: #F5A07E; }
+
+/* ─── NEW RULE BADGE ─────────────────────────────────── */
+.new-rule-banner {
+  background: linear-gradient(135deg, #FEF3DC, #E8F5EE);
+  border: 1px solid rgba(154,96,0,0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-top: 16px;
+  display: none;
+}
+
+.new-rule-banner.show { display: flex; align-items: flex-start; gap: 12px; animation: slideIn 0.4s ease; }
+.nrb-icon { font-size: 22px; }
+.nrb-title { font-size: 13px; font-weight: 700; color: var(--amber); }
+.nrb-body { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ─── PROGRESS BAR ─────────────────────────────────── */
+.progress-ring { transform: rotate(-90deg); }
+.progress-ring circle { transition: stroke-dashoffset 0.5s ease; }
+
+/* ─── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { height: auto; position: relative; flex-direction: row; flex-wrap: wrap; }
+  .shop-layout { grid-template-columns: 1fr; }
+  .grid4 { grid-template-columns: repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo">Basket<span>IQ</span></div>
+      <div class="logo-sub">Market Basket Analysis · Apriori</div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" onclick="setPanel('shop')">
+        <span class="nav-icon">🛒</span> Shop & Recommend
+      </button>
+      <button class="nav-item" onclick="setPanel('rules')">
+        <span class="nav-icon">📐</span> Association Rules
+      </button>
+      <button class="nav-item" onclick="setPanel('dashboard')">
+        <span class="nav-icon">📊</span> Analytics
+      </button>
+      <button class="nav-item" onclick="setPanel('algo')">
+        <span class="nav-icon">⚙️</span> Apriori Engine
+      </button>
+    </nav>
+
+    <div class="sidebar-stats">
+      <div class="stat-pill">
+        <div class="sv" id="sb-txns">197</div>
+        <div class="sl">Transactions</div>
+      </div>
+      <div class="stat-pill">
+        <div class="sv" id="sb-rules">88</div>
+        <div class="sl">Rules</div>
+      </div>
+      <div class="stat-pill">
+        <div class="sv" id="sb-products">28</div>
+        <div class="sl">Products</div>
+      </div>
+      <div class="stat-pill">
+        <div class="sv" id="sb-basket">4.7</div>
+        <div class="sl">Avg basket</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- ════ SHOP PANEL ════ -->
+    <div class="panel active" id="panel-shop">
+      <div class="page-header">
+        <div class="page-title">Shop & Recommendations</div>
+        <div class="page-subtitle">Select products — the Apriori engine recommends what else to buy.</div>
+      </div>
+
+      <div class="shop-layout">
+        <!-- Product browser -->
+        <div>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="product-search" placeholder="Search products…" oninput="filterProducts()"/>
+          </div>
+
+          <div class="filter-tabs" id="filter-tabs">
+            <button class="ftab active" onclick="setFilter('all',this)">All</button>
+            <button class="ftab" onclick="setFilter('dairy',this)">🥛 Dairy</button>
+            <button class="ftab" onclick="setFilter('produce',this)">🥦 Produce</button>
+            <button class="ftab" onclick="setFilter('bakery',this)">🥖 Bakery</button>
+            <button class="ftab" onclick="setFilter('beverage',this)">🥤 Beverages</button>
+            <button class="ftab" onclick="setFilter('meat',this)">🥩 Meat</button>
+            <button class="ftab" onclick="setFilter('other',this)">📦 Other</button>
+          </div>
+
+          <div class="products-grid" id="products-grid"></div>
+
+          <!-- Recommendations -->
+          <div class="rec-section" id="rec-section" style="display:none;">
+            <div class="rec-header">
+              <div class="rec-title">✨ Customers also buy</div>
+              <div class="rec-count" id="rec-count">0 suggestions</div>
+            </div>
+            <div class="rec-grid" id="rec-grid"></div>
+
+            <div class="new-rule-banner" id="new-rule-banner">
+              <div class="nrb-icon">🧠</div>
+              <div>
+                <div class="nrb-title">New rule learned!</div>
+                <div class="nrb-body" id="new-rule-text">This combination was new. A rule has been stored for future recommendations.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cart -->
+        <div class="cart-panel">
+          <div class="cart-title">
+            Shopping Cart
+            <div class="cart-badge" id="cart-badge">0</div>
+          </div>
+
+          <div class="cart-items" id="cart-items">
+            <div class="cart-empty">Your cart is empty.<br/>Click products to add them.</div>
+          </div>
+
+          <div class="cart-total">
+            <span>Total</span>
+            <span id="cart-total">$0.00</span>
+          </div>
+
+          <button class="btn-primary" id="rec-btn" onclick="getRecommendations()" disabled>
+            🔍 Get Recommendations
+          </button>
+          <button class="btn-secondary" onclick="clearCart()">Clear cart</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ RULES PANEL ════ -->
+    <div class="panel" id="panel-rules">
+      <div class="page-header">
+        <div class="page-title">Association Rules</div>
+        <div class="page-subtitle">All mined rules. Adjust thresholds to filter by quality metrics.</div>
+      </div>
+
+      <div class="card">
+        <div class="rules-controls">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Min Support <span class="ctrl-val" id="sup-val">0%</span></label>
+            <input type="range" min="0" max="8" value="0" step="1" id="sup-range" oninput="filterRules()"/>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Min Confidence <span class="ctrl-val" id="conf-val">0%</span></label>
+            <input type="range" min="0" max="80" value="0" step="5" id="conf-range" oninput="filterRules()"/>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Min Lift <span class="ctrl-val" id="lift-val">1.0</span></label>
+            <input type="range" min="10" max="120" value="10" step="5" id="lift-range" oninput="filterRules()"/>
+          </div>
+          <div style="margin-left:auto;">
+            <div style="font-size:13px;color:var(--text2);" id="rules-count-label">Showing all rules</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Antecedent (If)</th>
+                <th></th>
+                <th>Consequent (Then)</th>
+                <th>Support</th>
+                <th>Confidence</th>
+                <th>Lift</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody id="rules-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ DASHBOARD PANEL ════ -->
+    <div class="panel" id="panel-dashboard">
+      <div class="page-header">
+        <div class="page-title">Analytics Dashboard</div>
+        <div class="page-subtitle">Overview of patterns discovered by the Apriori algorithm.</div>
+      </div>
+
+      <div class="grid4">
+        <div class="metric-card">
+          <div class="metric-label">Transactions</div>
+          <div class="metric-val" id="d-txns">197</div>
+          <div class="metric-sub">↑ Dataset size</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Rules mined</div>
+          <div class="metric-val" id="d-rules">88</div>
+          <div class="metric-sub">↑ min lift 1.2</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Products</div>
+          <div class="metric-val" id="d-products">28</div>
+          <div class="metric-sub">In catalog</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Avg basket</div>
+          <div class="metric-val" id="d-basket">4.7</div>
+          <div class="metric-sub">Items per order</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Top 8 rules by lift</div>
+          <div id="top-lift-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Category distribution</div>
+          <div id="cat-chart-area" style="position:relative;height:220px;"><canvas id="cat-chart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Support vs Confidence (all rules)</div>
+        <div style="position:relative;height:260px;"><canvas id="scatter-canvas"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ════ ALGO PANEL ════ -->
+    <div class="panel" id="panel-algo">
+      <div class="page-header">
+        <div class="page-title">Apriori Engine</div>
+        <div class="page-subtitle">Tune parameters and re-run the algorithm in real time.</div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Parameters</div>
+
+          <div class="ctrl-group" style="margin-bottom:18px;">
+            <label class="ctrl-label">Min Support <span class="ctrl-val" id="ap-sup-val">3%</span></label>
+            <input type="range" min="1" max="10" value="3" step="1" id="ap-sup" oninput="runAprioriLive()" style="width:100%;"/>
+          </div>
+
+          <div class="ctrl-group" style="margin-bottom:18px;">
+            <label class="ctrl-label">Min Confidence <span class="ctrl-val" id="ap-conf-val">25%</span></label>
+            <input type="range" min="10" max="90" value="25" step="5" id="ap-conf" oninput="runAprioriLive()" style="width:100%;"/>
+          </div>
+
+          <div class="ctrl-group" style="margin-bottom:18px;">
+            <label class="ctrl-label">Min Lift <span class="ctrl-val" id="ap-lift-val">1.2</span></label>
+            <input type="range" min="10" max="50" value="12" step="1" id="ap-lift" oninput="runAprioriLive()" style="width:100%;"/>
+          </div>
+
+          <button class="btn-primary" onclick="runAprioriLive()">▶ Run Apriori</button>
+
+          <div class="algo-log" id="algo-log"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Output metrics</div>
+          <div class="grid2" style="margin-bottom:1rem;">
+            <div class="metric-card">
+              <div class="metric-label">Freq. itemsets</div>
+              <div class="metric-val" id="ap-itemsets">—</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Rules mined</div>
+              <div class="metric-val" id="ap-rules-out">—</div>
+            </div>
+          </div>
+
+          <div class="card-title" style="margin-top:8px;">Algorithm steps</div>
+          <div id="algo-steps" style="display:grid;gap:10px;margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ────────────────────────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ════════════════════════════════════════════════════════
+// DATA — product catalog
+// ════════════════════════════════════════════════════════
+const PRODUCTS = [
+  {id:"P001",name:"whole milk",label:"Whole Milk",cat:"dairy",icon:"🥛",price:1.99},
+  {id:"P002",name:"rolls/buns",label:"Rolls & Buns",cat:"bakery",icon:"🥖",price:2.49},
+  {id:"P003",name:"other vegetables",label:"Mixed Veg",cat:"produce",icon:"🥦",price:1.79},
+  {id:"P004",name:"soda",label:"Soda",cat:"beverage",icon:"🥤",price:1.29},
+  {id:"P005",name:"yogurt",label:"Yogurt",cat:"dairy",icon:"🫙",price:0.99},
+  {id:"P006",name:"bottled water",label:"Bottled Water",cat:"beverage",icon:"💧",price:0.89},
+  {id:"P007",name:"root vegetables",label:"Root Veg",cat:"produce",icon:"🥕",price:1.49},
+  {id:"P008",name:"tropical fruit",label:"Tropical Fruit",cat:"produce",icon:"🍍",price:2.99},
+  {id:"P009",name:"shopping bags",label:"Shopping Bags",cat:"other",icon:"🛍️",price:0.29},
+  {id:"P010",name:"pastry",label:"Pastry",cat:"bakery",icon:"🥐",price:1.89},
+  {id:"P011",name:"citrus fruit",label:"Citrus Fruit",cat:"produce",icon:"🍊",price:1.69},
+  {id:"P012",name:"canned beer",label:"Canned Beer",cat:"beverage",icon:"🍺",price:3.49},
+  {id:"P013",name:"brown bread",label:"Brown Bread",cat:"bakery",icon:"🍞",price:2.19},
+  {id:"P014",name:"margarine",label:"Margarine",cat:"dairy",icon:"🧈",price:1.59},
+  {id:"P015",name:"butter",label:"Butter",cat:"dairy",icon:"🫙",price:2.29},
+  {id:"P016",name:"newspapers",label:"Newspapers",cat:"other",icon:"📰",price:0.79},
+  {id:"P017",name:"curd",label:"Curd",cat:"dairy",icon:"🫙",price:1.09},
+  {id:"P018",name:"domestic eggs",label:"Eggs",cat:"dairy",icon:"🥚",price:2.99},
+  {id:"P019",name:"fruit/vegetable juice",label:"Fruit Juice",cat:"beverage",icon:"🧃",price:2.49},
+  {id:"P020",name:"whipped/sour cream",label:"Sour Cream",cat:"dairy",icon:"🫙",price:1.39},
+  {id:"P021",name:"pip fruit",label:"Pip Fruit",cat:"produce",icon:"🍏",price:1.99},
+  {id:"P022",name:"coffee",label:"Coffee",cat:"beverage",icon:"☕",price:4.99},
+  {id:"P023",name:"frozen vegetables",label:"Frozen Veg",cat:"produce",icon:"🧊",price:2.29},
+  {id:"P024",name:"pork",label:"Pork",cat:"meat",icon:"🥩",price:4.49},
+  {id:"P025",name:"cream cheese",label:"Cream Cheese",cat:"dairy",icon:"🧀",price:1.79},
+  {id:"P026",name:"sliced cheese",label:"Sliced Cheese",cat:"dairy",icon:"🧀",price:2.49},
+  {id:"P027",name:"bottled beer",label:"Bottled Beer",cat:"beverage",icon:"🍶",price:3.99},
+  {id:"P028",name:"waffles",label:"Waffles",cat:"bakery",icon:"🧇",price:2.89},
+];
+
+const PMAP = Object.fromEntries(PRODUCTS.map(p=>[p.name,p]));
+const CAT_COLORS = {dairy:"tag-dairy",produce:"tag-produce",bakery:"tag-bakery",beverage:"tag-beverage",meat:"tag-meat",other:"tag-other"};
+
+// ════════════════════════════════════════════════════════
+// APRIORI ENGINE (client-side)
+// ════════════════════════════════════════════════════════
+
+// Transactions: 197 seed rows + any user-added ones (persisted in localStorage)
+const SEED_TRANSACTIONS = [
+  ["whole milk","rolls/buns","other vegetables"],
+  ["whole milk","yogurt","tropical fruit"],
+  ["whole milk","soda","rolls/buns","pastry"],
+  ["whole milk","other vegetables","root vegetables","butter"],
+  ["yogurt","rolls/buns","whole milk","fruit/vegetable juice"],
+  ["other vegetables","root vegetables","whole milk","citrus fruit"],
+  ["whole milk","domestic eggs","margarine"],
+  ["soda","rolls/buns","whole milk"],
+  ["whole milk","butter","yogurt","cream cheese"],
+  ["other vegetables","whole milk","pip fruit"],
+  ["whole milk","whipped/sour cream","yogurt"],
+  ["rolls/buns","whole milk","newspapers"],
+  ["tropical fruit","other vegetables","whole milk"],
+  ["root vegetables","other vegetables","whole milk","butter"],
+  ["whole milk","curd","yogurt"],
+  ["whole milk","rolls/buns","shopping bags"],
+  ["other vegetables","root vegetables","pip fruit"],
+  ["whole milk","frozen vegetables","other vegetables"],
+  ["whole milk","brown bread","other vegetables"],
+  ["yogurt","whole milk","tropical fruit","pip fruit"],
+  ["soda","bottled water","rolls/buns"],
+  ["whole milk","sliced cheese","other vegetables"],
+  ["domestic eggs","whole milk","butter"],
+  ["whole milk","rolls/buns","pastry","coffee"],
+  ["other vegetables","whole milk","canned beer"],
+  ["yogurt","whole milk","cream cheese","curd"],
+  ["whole milk","margarine","other vegetables"],
+  ["root vegetables","whole milk","other vegetables","yogurt"],
+  ["whole milk","soda","other vegetables"],
+  ["rolls/buns","whole milk","tropical fruit"],
+  ["whole milk","other vegetables","shopping bags","newspapers"],
+  ["butter","whole milk","yogurt"],
+  ["whole milk","frozen vegetables","root vegetables"],
+  ["other vegetables","soda","whole milk"],
+  ["whole milk","pastry","coffee"],
+  ["yogurt","other vegetables","root vegetables"],
+  ["whole milk","rolls/buns","bottled water","soda"],
+  ["domestic eggs","other vegetables","whole milk"],
+  ["whole milk","whipped/sour cream","other vegetables"],
+  ["rolls/buns","soda","bottled water","shopping bags"],
+  ["whole milk","tropical fruit","citrus fruit"],
+  ["curd","whole milk","butter","domestic eggs"],
+  ["whole milk","other vegetables","pip fruit","tropical fruit"],
+  ["yogurt","whole milk","margarine"],
+  ["whole milk","newspapers","shopping bags"],
+  ["other vegetables","root vegetables","citrus fruit"],
+  ["whole milk","rolls/buns","pastry","soda"],
+  ["butter","other vegetables","whole milk","root vegetables"],
+  ["whole milk","frozen vegetables","pork"],
+  ["yogurt","tropical fruit","whole milk","citrus fruit"],
+  ["whole milk","domestic eggs","curd"],
+  ["rolls/buns","pastry","whole milk","coffee"],
+  ["other vegetables","frozen vegetables","whole milk"],
+  ["whole milk","margarine","butter"],
+  ["soda","other vegetables","rolls/buns"],
+  ["yogurt","whole milk","whipped/sour cream","cream cheese"],
+  ["other vegetables","whole milk","tropical fruit","root vegetables"],
+  ["whole milk","sliced cheese","cream cheese"],
+  ["domestic eggs","whole milk","shopping bags"],
+  ["rolls/buns","whole milk","citrus fruit","tropical fruit"],
+  ["whole milk","pork","other vegetables"],
+  ["yogurt","rolls/buns","tropical fruit"],
+  ["whole milk","other vegetables","newspapers"],
+  ["butter","whole milk","cream cheese"],
+  ["root vegetables","other vegetables","tropical fruit"],
+  ["whole milk","canned beer","bottled water"],
+  ["soda","whole milk","pastry"],
+  ["yogurt","other vegetables","whole milk","pip fruit"],
+  ["whole milk","brown bread","butter"],
+  ["other vegetables","domestic eggs","whole milk"],
+  ["rolls/buns","whole milk","shopping bags","soda"],
+  ["whole milk","root vegetables","curd"],
+  ["tropical fruit","pip fruit","other vegetables","whole milk"],
+  ["whole milk","whipped/sour cream","butter"],
+  ["yogurt","curd","whole milk"],
+  ["other vegetables","whole milk","sliced cheese"],
+  ["whole milk","rolls/buns","newspapers","pastry"],
+  ["soda","rolls/buns","whole milk","shopping bags"],
+  ["butter","yogurt","whole milk"],
+  ["whole milk","other vegetables","frozen vegetables","root vegetables"],
+  ["domestic eggs","rolls/buns","whole milk"],
+  ["whole milk","coffee","rolls/buns","pastry","newspapers"],
+  ["other vegetables","root vegetables","whole milk","pip fruit"],
+  ["whole milk","tropical fruit","yogurt","citrus fruit"],
+  ["curd","yogurt","whipped/sour cream"],
+  ["whole milk","bottled water","soda"],
+  ["rolls/buns","other vegetables","whole milk"],
+  ["whole milk","domestic eggs","other vegetables","butter"],
+  ["yogurt","whole milk","pip fruit"],
+  ["whole milk","pastry","coffee","rolls/buns"],
+  ["other vegetables","whole milk","margarine"],
+  ["whole milk","frozen vegetables","shopping bags"],
+  ["root vegetables","butter","other vegetables"],
+  ["whole milk","canned beer","soda"],
+  ["yogurt","cream cheese","whipped/sour cream","whole milk"],
+  ["whole milk","tropical fruit","other vegetables","root vegetables"],
+  ["rolls/buns","pastry","whole milk"],
+  ["domestic eggs","butter","whole milk"],
+  ["whole milk","citrus fruit","other vegetables"],
+  ["soda","bottled water","whole milk","canned beer"],
+  ["yogurt","whole milk","sliced cheese"],
+  ["other vegetables","whole milk","brown bread"],
+  ["whole milk","rolls/buns","tropical fruit","yogurt"],
+  ["root vegetables","other vegetables","pip fruit","whole milk"],
+  ["whole milk","butter","cream cheese","yogurt"],
+  ["pastry","rolls/buns","whole milk","coffee","newspapers"],
+  ["other vegetables","frozen vegetables","root vegetables"],
+  ["whole milk","domestic eggs","sliced cheese"],
+  ["yogurt","other vegetables","whole milk","whipped/sour cream"],
+  ["rolls/buns","soda","other vegetables"],
+  ["whole milk","margarine","domestic eggs"],
+  ["other vegetables","pip fruit","tropical fruit","whole milk"],
+  ["whole milk","whipped/sour cream","curd"],
+  ["yogurt","whole milk","tropical fruit"],
+  ["rolls/buns","whole milk","butter","domestic eggs"],
+  ["other vegetables","whole milk","citrus fruit","pip fruit"],
+  ["whole milk","curd","cream cheese","yogurt"],
+  ["soda","rolls/buns","other vegetables","whole milk"],
+  ["whole milk","frozen vegetables","domestic eggs"],
+  ["yogurt","whipped/sour cream","cream cheese"],
+  ["whole milk","root vegetables","other vegetables","pip fruit"],
+  ["rolls/buns","other vegetables","whole milk","root vegetables"],
+  ["whole milk","tropical fruit","pip fruit"],
+  ["butter","domestic eggs","whole milk","other vegetables"],
+  ["whole milk","yogurt","sliced cheese","cream cheese"],
+  ["other vegetables","root vegetables","curd","whole milk"],
+  ["rolls/buns","whole milk","margarine"],
+  ["whole milk","shopping bags","newspapers","domestic eggs"],
+  ["soda","bottled water","canned beer","whole milk"],
+  ["yogurt","tropical fruit","citrus fruit","whole milk"],
+  ["whole milk","other vegetables","butter","cream cheese"],
+  ["rolls/buns","pastry","coffee","newspapers"],
+  ["whole milk","domestic eggs","root vegetables"],
+  ["other vegetables","whole milk","frozen vegetables","shopping bags"],
+  ["yogurt","whole milk","other vegetables","root vegetables","butter"],
+  ["whole milk","sliced cheese","butter"],
+  ["soda","canned beer","other vegetables"],
+  ["whole milk","tropical fruit","other vegetables","citrus fruit"],
+  ["rolls/buns","whole milk","curd"],
+  ["butter","other vegetables","root vegetables","whole milk"],
+  ["whole milk","yogurt","cream cheese"],
+  ["other vegetables","domestic eggs","root vegetables"],
+  ["whole milk","pip fruit","root vegetables"],
+  ["rolls/buns","pastry","soda","whole milk"],
+  ["yogurt","other vegetables","tropical fruit","root vegetables"],
+  ["whole milk","whipped/sour cream","sliced cheese"],
+  ["other vegetables","whole milk","newspapers"],
+  ["rolls/buns","domestic eggs","whole milk","butter"],
+  ["whole milk","citrus fruit","tropical fruit","yogurt"],
+  ["other vegetables","root vegetables","whole milk","frozen vegetables"],
+  ["whole milk","curd","other vegetables","root vegetables"],
+  ["soda","rolls/buns","pastry","coffee"],
+  ["yogurt","whole milk","butter","domestic eggs"],
+  ["whole milk","other vegetables","margarine","shopping bags"],
+  ["tropical fruit","other vegetables","pip fruit"],
+  ["whole milk","rolls/buns","domestic eggs"],
+  ["other vegetables","root vegetables","yogurt","butter"],
+  ["whole milk","cream cheese","other vegetables"],
+  ["soda","whole milk","bottled water","newspapers"],
+  ["yogurt","tropical fruit","pip fruit","whole milk"],
+  ["whole milk","other vegetables","citrus fruit","root vegetables"],
+  ["rolls/buns","other vegetables","soda"],
+  ["whole milk","domestic eggs","yogurt","butter"],
+  ["other vegetables","root vegetables","whole milk","margarine"],
+  ["whole milk","frozen vegetables","citrus fruit"],
+  ["soda","canned beer","bottled water"],
+  ["yogurt","whole milk","curd","whipped/sour cream"],
+  ["whole milk","other vegetables","pip fruit","citrus fruit"],
+  ["rolls/buns","whole milk","pastry","shopping bags"],
+  ["butter","whole milk","other vegetables","cream cheese"],
+  ["whole milk","domestic eggs","frozen vegetables"],
+  ["other vegetables","tropical fruit","whole milk","root vegetables"],
+  ["yogurt","cream cheese","sliced cheese","whole milk"],
+  ["whole milk","rolls/buns","margarine"],
+  ["soda","other vegetables","bottled water"],
+  ["whole milk","root vegetables","pip fruit","other vegetables"],
+  ["domestic eggs","whole milk","other vegetables","root vegetables"],
+  ["yogurt","whole milk","tropical fruit","other vegetables"],
+  ["whole milk","whipped/sour cream","butter","cream cheese"],
+  ["rolls/buns","coffee","pastry"],
+  ["whole milk","other vegetables","frozen vegetables","butter"],
+  ["soda","rolls/buns","whole milk","pastry"],
+  ["yogurt","other vegetables","root vegetables","whole milk"],
+  ["whole milk","domestic eggs","sliced cheese","cream cheese"],
+  ["other vegetables","whole milk","brown bread","root vegetables"],
+  ["tropical fruit","citrus fruit","pip fruit","yogurt"],
+  ["whole milk","shopping bags","newspapers","soda"],
+  ["rolls/buns","whole milk","other vegetables","root vegetables"],
+  ["butter","cream cheese","whole milk","yogurt"],
+  ["whole milk","domestic eggs","other vegetables","yogurt"],
+  ["soda","bottled water","rolls/buns","other vegetables"],
+  ["whole milk","frozen vegetables","other vegetables","pip fruit"],
+  ["yogurt","curd","cream cheese","whipped/sour cream","whole milk"],
+  ["whole milk","root vegetables","other vegetables","citrus fruit"],
+  ["rolls/buns","whole milk","butter","other vegetables"],
+  ["domestic eggs","whole milk","cream cheese","yogurt"],
+  ["other vegetables","tropical fruit","pip fruit","root vegetables"],
+];
+
+// ── In-memory state (persisted via localStorage) ──────
+function loadState() {
+  try {
+    const s = localStorage.getItem("basketiq_state");
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return { transactions: SEED_TRANSACTIONS.map(t=>[...t]), rules: null, n_txns: SEED_TRANSACTIONS.length };
+}
+
+function saveState(state) {
+  try { localStorage.setItem("basketiq_state", JSON.stringify(state)); } catch(e) {}
+}
+
+let STATE = loadState();
+let RULES = [];
+let cart = [];
+let currentFilter = "all";
+
+// ── Pure JS Apriori ──────────────────────────────────────
+function apriori(transactions, minSupport, minConfidence, minLift) {
+  const n = transactions.length;
+  const itemCount = {};
+
+  transactions.forEach(t => {
+    t.forEach(item => {
+      const key = JSON.stringify([item]);
+      itemCount[key] = (itemCount[key] || 0) + 1;
+    });
+  });
+
+  const frequent = {};
+  let current = [];
+
+  Object.entries(itemCount).forEach(([key, count]) => {
+    if (count / n >= minSupport) {
+      frequent[key] = count;
+      current.push(JSON.parse(key));
+    }
+  });
+
+  let k = 2;
+  while (current.length > 0 && k <= 4) {
+    const candidates = {};
+    for (let i = 0; i < current.length; i++) {
+      for (let j = i + 1; j < current.length; j++) {
+        const union = [...new Set([...current[i], ...current[j]])].sort();
+        if (union.length === k) {
+          const key = JSON.stringify(union);
+          if (!candidates[key]) candidates[key] = union;
+        }
+      }
+    }
+
+    const candidateList = Object.values(candidates);
+    const candCount = {};
+    transactions.forEach(t => {
+      const tSet = new Set(t);
+      candidateList.forEach(cand => {
+        if (cand.every(item => tSet.has(item))) {
+          const key = JSON.stringify(cand);
+          candCount[key] = (candCount[key] || 0) + 1;
+        }
+      });
+    });
+
+    current = [];
+    Object.entries(candCount).forEach(([key, count]) => {
+      if (count / n >= minSupport) {
+        frequent[key] = count;
+        current.push(JSON.parse(key));
+      }
+    });
+    k++;
+  }
+
+  // Generate rules
+  const rules = [];
+  Object.entries(frequent).forEach(([key, count]) => {
+    const itemset = JSON.parse(key);
+    if (itemset.length < 2) return;
+    const support = count / n;
+
+    for (let r = 1; r < itemset.length; r++) {
+      getCombinations(itemset, r).forEach(ant => {
+        const con = itemset.filter(x => !ant.includes(x));
+        if (!con.length) return;
+        const antKey = JSON.stringify([...ant].sort());
+        const conKey = JSON.stringify([...con].sort());
+        const antCount = frequent[antKey] || 0;
+        const conCount = frequent[conKey] || 0;
+        if (!antCount || !conCount) return;
+        const confidence = (count / antCount);
+        const lift = confidence / (conCount / n);
+        if (confidence >= minConfidence && lift >= minLift) {
+          rules.push({ antecedent: ant.sort(), consequent: con.sort(), support: +support.toFixed(4), confidence: +confidence.toFixed(4), lift: +lift.toFixed(4), count, source: "apriori" });
+        }
+      });
+    }
+  });
+
+  rules.sort((a, b) => b.lift - a.lift);
+  return { frequent, rules, n };
+}
+
+function getCombinations(arr, k) {
+  if (k === 1) return arr.map(x => [x]);
+  const result = [];
+  for (let i = 0; i <= arr.length - k; i++) {
+    getCombinations(arr.slice(i + 1), k - 1).forEach(combo => result.push([arr[i], ...combo]));
+  }
+  return result;
+}
+
+// ── Build rules from current transactions ─────────────────
+function buildRules(minSup = 0.03, minConf = 0.25, minLift = 1.2) {
+  const result = apriori(STATE.transactions, minSup, minConf, minLift);
+  STATE.rules = result.rules;
+  RULES = result.rules;
+  saveState(STATE);
+  updateSidebarStats();
+  return result;
+}
+
+// ── Recommendation engine ─────────────────────────────────
+function recommend(cartItems, topN = 6) {
+  const cartSet = new Set(cartItems.map(i => i.toLowerCase()));
+  const scores = {};
+
+  RULES.forEach(rule => {
+    const antSet = new Set(rule.antecedent);
+    if ([...antSet].every(x => cartSet.has(x))) {
+      rule.consequent.forEach(item => {
+        if (!cartSet.has(item)) {
+          if (!scores[item] || rule.lift > scores[item].lift) {
+            scores[item] = { confidence: rule.confidence, lift: rule.lift, support: rule.support, rulesHit: (scores[item]?.rulesHit || 0) + 1 };
+          } else {
+            scores[item].rulesHit = (scores[item].rulesHit || 0) + 1;
+          }
+        }
+      });
+    }
+  });
+
+  return Object.entries(scores)
+    .sort((a, b) => b[1].lift - a[1].lift)
+    .slice(0, topN)
+    .map(([item, stats]) => ({ item, ...stats, product: PMAP[item] || { label: item, icon: "🛒", cat: "other", price: 0 } }));
+}
+
+// ── Add new transaction and rebuild ───────────────────────
+function addTransaction(items) {
+  const normalized = items.map(i => i.toLowerCase());
+  STATE.transactions.push(normalized);
+  STATE.n_txns = STATE.transactions.length;
+  const result = buildRules();
+  saveState(STATE);
+  return result;
+}
+
+// ════════════════════════════════════════════════════════
+// INITIALIZATION
+// ════════════════════════════════════════════════════════
+window.addEventListener("DOMContentLoaded", () => {
+  buildRules();
+  renderProducts();
+  renderRulesTable();
+  renderDashboard();
+  renderAlgoSteps();
+});
+
+// ════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════
+function setPanel(name) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+  document.getElementById("panel-" + name).classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(b => {
+    if (b.textContent.toLowerCase().includes(name === "shop" ? "shop" : name === "rules" ? "rules" : name === "dashboard" ? "analytics" : "apriori")) {
+      b.classList.add("active");
+    }
+  });
+  if (name === "dashboard") renderDashboard();
+}
+
+// ════════════════════════════════════════════════════════
+// PRODUCTS
+// ════════════════════════════════════════════════════════
+function renderProducts(filter = currentFilter, query = "") {
+  const grid = document.getElementById("products-grid");
+  const q = query.toLowerCase();
+  const visible = PRODUCTS.filter(p =>
+    (filter === "all" || p.cat === filter) &&
+    (q === "" || p.label.toLowerCase().includes(q) || p.name.includes(q))
+  );
+
+  grid.innerHTML = visible.map(p => `
+    <div class="product-card ${cart.includes(p.id) ? "in-cart" : ""}" id="pc-${p.id}" onclick="toggleCart('${p.id}')">
+      <div class="pc-icon">${p.icon}</div>
+      <div class="pc-name">${p.label}</div>
+      <div class="pc-price">$${p.price.toFixed(2)}</div>
+    </div>
+  `).join("");
+}
+
+function filterProducts() {
+  const q = document.getElementById("product-search").value;
+  renderProducts(currentFilter, q);
+}
+
+function setFilter(cat, btn) {
+  currentFilter = cat;
+  document.querySelectorAll(".ftab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderProducts(cat, document.getElementById("product-search").value);
+}
+
+// ════════════════════════════════════════════════════════
+// CART
+// ════════════════════════════════════════════════════════
+function toggleCart(id) {
+  if (cart.includes(id)) {
+    cart = cart.filter(x => x !== id);
+  } else {
+    cart.push(id);
+  }
+  renderCart();
+  renderProducts(currentFilter, document.getElementById("product-search").value);
+  document.getElementById("rec-section").style.display = "none";
+  document.getElementById("new-rule-banner").classList.remove("show");
+}
+
+function renderCart() {
+  const items = cart.map(id => PRODUCTS.find(p => p.id === id));
+  const total = items.reduce((s, p) => s + p.price, 0);
+
+  document.getElementById("cart-badge").textContent = cart.length;
+  document.getElementById("cart-total").textContent = `$${total.toFixed(2)}`;
+  document.getElementById("rec-btn").disabled = cart.length < 1;
+
+  const el = document.getElementById("cart-items");
+  if (!cart.length) {
+    el.innerHTML = `<div class="cart-empty">Your cart is empty.<br/>Click products to add them.</div>`;
+    return;
+  }
+
+  el.innerHTML = items.map(p => `
+    <div class="cart-item">
+      <div class="ci-icon">${p.icon}</div>
+      <div class="ci-info">
+        <div class="ci-name">${p.label}</div>
+        <div class="ci-price">$${p.price.toFixed(2)}</div>
+      </div>
+      <button class="ci-remove" onclick="toggleCart('${p.id}')">✕</button>
+    </div>
+  `).join("");
+}
+
+function clearCart() {
+  cart = [];
+  renderCart();
+  renderProducts(currentFilter, document.getElementById("product-search").value);
+  document.getElementById("rec-section").style.display = "none";
+  document.getElementById("new-rule-banner").classList.remove("show");
+}
+
+// ════════════════════════════════════════════════════════
+// RECOMMENDATIONS
+// ════════════════════════════════════════════════════════
+function getRecommendations() {
+  if (!cart.length) return;
+  const cartNames = cart.map(id => PRODUCTS.find(p => p.id === id).name);
+  const recs = recommend(cartNames, 6);
+
+  const recSection = document.getElementById("rec-section");
+  const recGrid = document.getElementById("rec-grid");
+  const recCount = document.getElementById("rec-count");
+  const banner = document.getElementById("new-rule-banner");
+
+  recSection.style.display = "block";
+  banner.classList.remove("show");
+
+  if (recs.length === 0) {
+    // NEW: no existing rules match — create a rule for this transaction
+    addTransaction(cartNames);
+    const newRecs = recommend(cartNames, 6);
+
+    if (newRecs.length === 0) {
+      recGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:24px;font-size:14px;">
+        No patterns found yet for this exact combination. Transaction has been stored — more data will improve recommendations.
+      </div>`;
+    } else {
+      renderRecCards(newRecs, recGrid, recCount);
+    }
+
+    banner.classList.add("show");
+    document.getElementById("new-rule-text").textContent =
+      `[${cartNames.join(", ")}] was a new combination. Rules rebuilt from ${STATE.n_txns} transactions — ${RULES.length} rules now active.`;
+    updateSidebarStats();
+    renderRulesTable();
+    showToast(`New transaction stored! ${RULES.length} rules updated.`, "success");
+  } else {
+    renderRecCards(recs, recGrid, recCount);
+    // Still log the transaction for future learning
+    addTransaction(cartNames);
+    updateSidebarStats();
+    renderRulesTable();
+  }
+}
+
+function renderRecCards(recs, grid, countEl) {
+  countEl.textContent = `${recs.length} suggestion${recs.length !== 1 ? "s" : ""}`;
+  grid.innerHTML = recs.map((r, i) => {
+    const p = r.product;
+    const conf = (r.confidence * 100).toFixed(0);
+    const badgeClass = r.confidence > 0.55 ? "badge-high" : r.confidence > 0.35 ? "badge-med" : "badge-low";
+    const badgeLabel = r.confidence > 0.55 ? "High" : r.confidence > 0.35 ? "Med" : "Low";
+    return `
+      <div class="rec-card" style="animation-delay:${i*0.06}s">
+        <div class="rec-badge ${badgeClass}">${badgeLabel}</div>
+        <div class="rec-icon">${p.icon}</div>
+        <div class="rec-name">${p.label || r.item}</div>
+        <div class="rec-metrics">Conf: ${conf}%</div>
+        <div class="rec-lift">Lift: ${r.lift.toFixed(2)}×</div>
+        <button class="add-rec-btn" onclick="addRecToCart('${p.id || ""}','${r.item}')">+ Add to cart</button>
+      </div>`;
+  }).join("");
+}
+
+function addRecToCart(id, name) {
+  const p = PRODUCTS.find(x => x.id === id || x.name === name);
+  if (p && !cart.includes(p.id)) {
+    cart.push(p.id);
+    renderCart();
+    renderProducts(currentFilter, document.getElementById("product-search").value);
+    showToast(`${p.label} added to cart!`, "info");
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// RULES TABLE
+// ════════════════════════════════════════════════════════
+function renderRulesTable(rules = RULES) {
+  const minSup = parseFloat(document.getElementById("sup-range").value) / 100;
+  const minConf = parseFloat(document.getElementById("conf-range").value) / 100;
+  const minLift = parseFloat(document.getElementById("lift-range").value) / 10;
+
+  document.getElementById("sup-val").textContent = (minSup * 100).toFixed(0) + "%";
+  document.getElementById("conf-val").textContent = (minConf * 100).toFixed(0) + "%";
+  document.getElementById("lift-val").textContent = minLift.toFixed(1);
+
+  const filtered = RULES.filter(r => r.support >= minSup && r.confidence >= minConf && r.lift >= minLift);
+  document.getElementById("rules-count-label").textContent = `Showing ${filtered.length} of ${RULES.length} rules`;
+
+  const maxLift = Math.max(...RULES.map(r => r.lift), 1);
+
+  const tbody = document.getElementById("rules-tbody");
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3);">No rules match these thresholds.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.slice(0, 80).map(r => {
+    const catKey = (PMAP[r.antecedent[0]]?.cat) || "other";
+    const tagClass = CAT_COLORS[catKey] || "tag-other";
+    const liftPct = Math.min((r.lift / maxLift) * 100, 100).toFixed(1);
+    return `<tr>
+      <td><strong>${r.antecedent.join(" + ")}</strong></td>
+      <td class="arrow">→</td>
+      <td>${r.consequent.join(" + ")}</td>
+      <td>${(r.support * 100).toFixed(1)}%</td>
+      <td>
+        <div style="font-weight:500;">${(r.confidence * 100).toFixed(0)}%</div>
+        <div style="height:3px;background:var(--border-md);border-radius:2px;margin-top:3px;"><div style="width:${(r.confidence*100).toFixed(0)}%;height:3px;border-radius:2px;background:var(--accent);"></div></div>
+      </td>
+      <td>
+        <div class="lift-indicator">
+          <span style="font-weight:600;font-size:14px;">${r.lift.toFixed(2)}</span>
+          <div class="lift-bar-bg"><div class="lift-bar-fill" style="width:${liftPct}%"></div></div>
+        </div>
+      </td>
+      <td><span class="tag ${tagClass}">${catKey}</span></td>
+    </tr>`;
+  }).join("");
+}
+
+function filterRules() { renderRulesTable(); }
+
+// ════════════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════════════
+let scatterChart = null, catChart = null;
+
+function renderDashboard() {
+  document.getElementById("d-txns").textContent = STATE.n_txns;
+  document.getElementById("d-rules").textContent = RULES.length;
+  document.getElementById("d-products").textContent = PRODUCTS.length;
+  const avgBasket = STATE.transactions.reduce((s, t) => s + t.length, 0) / Math.max(STATE.transactions.length, 1);
+  document.getElementById("d-basket").textContent = avgBasket.toFixed(1);
+
+  // Top rules by lift
+  const top = RULES.slice(0, 8);
+  const maxL = top[0]?.lift || 1;
+  document.getElementById("top-lift-list").innerHTML = top.map(r => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.antecedent.join("+")} → ${r.consequent.join("+")}</div>
+        <div style="height:4px;background:var(--border-md);border-radius:2px;margin-top:4px;"><div style="width:${(r.lift/maxL*100).toFixed(0)}%;height:4px;border-radius:2px;background:var(--accent);"></div></div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--accent);min-width:36px;text-align:right;">${r.lift.toFixed(2)}</div>
+    </div>
+  `).join("");
+
+  // Category pie
+  const catCounts = {};
+  STATE.transactions.forEach(t => t.forEach(item => {
+    const cat = PMAP[item]?.cat || "other";
+    catCounts[cat] = (catCounts[cat] || 0) + 1;
+  }));
+  const catLabels = Object.keys(catCounts);
+  const catData = Object.values(catCounts);
+  const palette = ["#2D5BE3","#1A7A4A","#9A6000","#5B2D9A","#C0392B","#6B6560"];
+
+  if (catChart) catChart.destroy();
+  catChart = new Chart(document.getElementById("cat-chart").getContext("2d"), {
+    type: "doughnut",
+    data: { labels: catLabels, datasets: [{ data: catData, backgroundColor: palette, borderWidth: 2, borderColor: "#fff" }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right", labels: { font: { size: 12, family: "'DM Sans'" }, boxWidth: 12 } } } }
+  });
+
+  // Scatter: support vs confidence
+  const pts = RULES.map(r => ({ x: +(r.support * 100).toFixed(2), y: +(r.confidence * 100).toFixed(0), r: Math.min(r.lift * 2, 14) }));
+  if (scatterChart) scatterChart.destroy();
+  scatterChart = new Chart(document.getElementById("scatter-canvas").getContext("2d"), {
+    type: "bubble",
+    data: { datasets: [{ label: "Rules", data: pts, backgroundColor: "rgba(45,91,227,0.4)", borderColor: "rgba(45,91,227,0.8)", borderWidth: 1 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => {
+        const r = RULES[ctx.dataIndex];
+        return r ? [`${r.antecedent.join("+")} → ${r.consequent.join("+")}`, `Sup: ${(r.support*100).toFixed(1)}%  Conf: ${(r.confidence*100).toFixed(0)}%  Lift: ${r.lift.toFixed(2)}`] : [];
+      }}}},
+      scales: {
+        x: { title: { display: true, text: "Support (%)", font: { size: 11 } }, min: 0, max: 12 },
+        y: { title: { display: true, text: "Confidence (%)", font: { size: 11 } }, min: 0, max: 110 }
+      }
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// APRIORI EXPLORER
+// ════════════════════════════════════════════════════════
+function runAprioriLive() {
+  const minSup = parseInt(document.getElementById("ap-sup").value) / 100;
+  const minConf = parseInt(document.getElementById("ap-conf").value) / 100;
+  const minLift = parseInt(document.getElementById("ap-lift").value) / 10;
+
+  document.getElementById("ap-sup-val").textContent = (minSup * 100).toFixed(0) + "%";
+  document.getElementById("ap-conf-val").textContent = (minConf * 100).toFixed(0) + "%";
+  document.getElementById("ap-lift-val").textContent = minLift.toFixed(1);
+
+  const log = document.getElementById("algo-log");
+  log.innerHTML = "";
+
+  function addLog(msg, cls = "") {
+    log.innerHTML += `<div class="${cls}">${msg}</div>`;
+    log.scrollTop = log.scrollHeight;
+  }
+
+  addLog(`[init] Transactions loaded: ${STATE.transactions.length}`, "log-info");
+  addLog(`[params] min_sup=${(minSup*100).toFixed(0)}%  min_conf=${(minConf*100).toFixed(0)}%  min_lift=${minLift.toFixed(1)}`, "log-info");
+  addLog(`[pass 1] Counting 1-itemsets...`, "log-info");
+
+  const result = apriori(STATE.transactions, minSup, minConf, minLift);
+  const freq = result.frequent;
+  const freqKeys = Object.keys(freq);
+  const k1 = freqKeys.filter(k => JSON.parse(k).length === 1).length;
+  const k2 = freqKeys.filter(k => JSON.parse(k).length === 2).length;
+  const k3 = freqKeys.filter(k => JSON.parse(k).length === 3).length;
+
+  addLog(`[pass 1] Frequent 1-itemsets: ${k1}`, "log-ok");
+  addLog(`[pass 2] Generating 2-itemset candidates via self-join...`, "log-info");
+  addLog(`[pass 2] Frequent 2-itemsets: ${k2}`, "log-ok");
+  if (k3 > 0) {
+    addLog(`[pass 3] Frequent 3-itemsets: ${k3}`, "log-ok");
+  }
+  addLog(`[rules] Generating rules (min_conf=${(minConf*100).toFixed(0)}%, min_lift=${minLift.toFixed(1)})...`, "log-info");
+  addLog(`[done] ✓ ${result.rules.length} rules mined from ${freqKeys.length} frequent itemsets`, "log-ok");
+
+  document.getElementById("ap-itemsets").textContent = freqKeys.length;
+  document.getElementById("ap-rules-out").textContent = result.rules.length;
+}
+
+function renderAlgoSteps() {
+  const steps = [
+    { num: "01", title: "Scan database", body: "Count how often each product appears. Remove items below min_support — these are too rare to form reliable rules." },
+    { num: "02", title: "Self-join", body: "Combine frequent 1-itemsets into 2-itemset candidates. Prune any whose subsets are infrequent (anti-monotone property)." },
+    { num: "03", title: "Iterate", body: "Repeat for 3-itemsets, 4-itemsets… Each pass shrinks the candidate pool. Stop when no new frequent sets are found." },
+    { num: "04", title: "Extract rules", body: "For every frequent itemset, generate rules A→B. Keep only those with confidence ≥ threshold and lift > 1 (non-random association)." },
+  ];
+
+  document.getElementById("algo-steps").innerHTML = steps.map(s => `
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;border-left:3px solid var(--accent);">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Step ${s.num}</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;">${s.title}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5;">${s.body}</div>
+    </div>
+  `).join("");
+
+  runAprioriLive();
+}
+
+// ════════════════════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════════════════════
+function updateSidebarStats() {
+  document.getElementById("sb-txns").textContent = STATE.n_txns;
+  document.getElementById("sb-rules").textContent = RULES.length;
+}
+
+function showToast(msg, type = "") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast" + (type ? " " + type : "");
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3200);
+}
+</script>
+</body>
+</html>
