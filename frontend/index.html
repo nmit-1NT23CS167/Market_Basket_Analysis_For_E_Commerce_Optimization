@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Food App AI</title>
+
+<style>
+body { margin:0; font-family:Segoe UI; background:#f7f8fa; }
+
+/* AUTH */
+#auth {
+  height:100vh; display:flex; justify-content:center; align-items:center;
+  background:linear-gradient(135deg,#0c831f,#00b894);
+}
+.box {
+  background:white; padding:25px; border-radius:12px; width:300px; text-align:center;
+}
+.box input {
+  width:100%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #ccc;
+}
+.box button {
+  width:100%; padding:10px; background:#0c831f; color:white; border:none; border-radius:8px;
+}
+.toggle { color:blue; cursor:pointer; }
+
+/* HEADER */
+header {
+  background:#0c831f; color:white; padding:15px;
+  display:flex; justify-content:space-between;
+}
+
+/* GRID */
+.container {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:10px; padding:10px;
+}
+.card {
+  background:white; padding:10px; border-radius:10px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.08);
+}
+.card img {
+  width:100%; height:100px; border-radius:8px;
+}
+
+/* BUTTONS */
+.btn { background:#0c831f; color:white; border:none; padding:5px 10px; border-radius:5px; }
+.qty { display:flex; justify-content:space-between; }
+
+/* CART BAR */
+.cart-bar {
+  position:fixed; bottom:0; width:100%;
+  background:#0c831f; color:white; padding:10px;
+  display:none; justify-content:space-between;
+}
+
+/* CART */
+#cartPage { display:none; padding:15px; }
+
+/* RECOMMEND */
+#recommend {
+  padding:10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="box">
+    <h3 id="title">Login</h3>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="handleAuth()">Submit</button>
+    <div class="toggle" onclick="toggleMode()">Switch to Signup</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+<header>
+  <h3>Food App</h3>
+  <button onclick="logout()">Logout</button>
+</header>
+
+<!-- RECOMMEND -->
+<div id="recommend"></div>
+
+<div id="home" class="container"></div>
+
+<div class="cart-bar" id="cartBar">
+  <span id="cartInfo"></span>
+  <button onclick="showCart()">Cart</button>
+</div>
+
+<div id="cartPage">
+  <div id="bill"></div>
+  <button onclick="placeOrder()">Place Order</button>
+</div>
+
+</div>
+
+<script>
+
+/* AUTH */
+let isLogin = true;
+
+function toggleMode(){
+  isLogin = !isLogin;
+  title.innerText = isLogin ? "Login" : "Signup";
+}
+
+function handleAuth(){
+  let u = username.value;
+  let p = password.value;
+
+  let users = JSON.parse(localStorage.getItem("users") || "[]");
+
+  if(isLogin){
+    let user = users.find(x=>x.u===u && x.p===p);
+    if(user){
+      localStorage.setItem("currentUser", u);
+      startApp();
+    } else alert("Invalid login");
+  } else {
+    users.push({u,p});
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Signup success");
+    toggleMode();
+  }
+}
+
+function startApp(){
+  auth.style.display="none";
+  app.style.display="block";
+}
+
+function logout(){
+  localStorage.removeItem("currentUser");
+  location.reload();
+}
+
+if(localStorage.getItem("currentUser")) startApp();
+
+
+/* PRODUCTS */
+let products = [
+ {id:1,name:"Apple",price:50,img:"https://source.unsplash.com/200x200/?apple"},
+ {id:2,name:"Banana",price:30,img:"https://source.unsplash.com/200x200/?banana"},
+ {id:3,name:"Pizza",price:120,img:"https://source.unsplash.com/200x200/?pizza"},
+ {id:4,name:"Burger",price:90,img:"https://source.unsplash.com/200x200/?burger"},
+ {id:5,name:"Juice",price:60,img:"https://source.unsplash.com/200x200/?juice"},
+ {id:6,name:"Fries",price:80,img:"https://source.unsplash.com/200x200/?fries"}
+];
+
+/* DYNAMIC ORDERS */
+let pastOrders = JSON.parse(localStorage.getItem("orders")) || [
+  ["Apple","Banana","Juice"],
+  ["Pizza","Burger"]
+];
+
+let cart = [];
+let current = products;
+
+
+/* RENDER */
+function render(){
+ let html="";
+ current.forEach(p=>{
+  let item = cart.find(c=>c.id===p.id);
+
+  html += `
+  <div class="card">
+    <img src="${p.img}">
+    <h4>${p.name}</h4>
+    <p>₹${p.price}</p>
+    ${
+      item ?
+      `<div class="qty">
+        <button onclick="change(${p.id},-1)">-</button>
+        ${item.qty}
+        <button onclick="change(${p.id},1)">+</button>
+      </div>`
+      :
+      `<button class="btn" onclick="add(${p.id})">Add</button>`
+    }
+  </div>`;
+ });
+
+ home.innerHTML = html;
+ updateCart();
+}
+
+
+/* CART */
+function add(id){
+ let p = products.find(x=>x.id===id);
+ cart.push({...p,qty:1});
+
+ showRecommendations(p.name); // 🔥
+
+ render();
+}
+
+function change(id,val){
+ let item = cart.find(x=>x.id===id);
+ item.qty += val;
+ if(item.qty<=0) cart = cart.filter(x=>x.id!==id);
+ render();
+}
+
+function updateCart(){
+ let count = cart.reduce((a,b)=>a+b.qty,0);
+ let total = cart.reduce((a,b)=>a+b.price*b.qty,0);
+
+ if(count>0){
+   cartBar.style.display="flex";
+   cartInfo.innerText = count+" items | ₹"+total;
+ } else cartBar.style.display="none";
+}
+
+
+/* CART PAGE */
+function showCart(){
+ home.style.display="none";
+ cartPage.style.display="block";
+
+ let total=0,html="";
+ cart.forEach(c=>{
+  total+=c.price*c.qty;
+  html+=`<p>${c.name} x ${c.qty} = ₹${c.price*c.qty}</p>`;
+ });
+
+ html+=`<hr><h3>Total ₹${total+30}</h3>`;
+ bill.innerHTML=html;
+}
+
+
+/* SAVE ORDER */
+function placeOrder(){
+
+ let order = cart.map(i=>i.name);
+
+ let orders = JSON.parse(localStorage.getItem("orders")) || [];
+ orders.push(order);
+ localStorage.setItem("orders", JSON.stringify(orders));
+
+ alert("Order placed 🚀");
+
+ cart=[];
+ location.reload();
+}
+
+
+/* APRIORI LOGIC */
+function getRecommendations(itemName){
+ let freq = {};
+
+ pastOrders = JSON.parse(localStorage.getItem("orders")) || pastOrders;
+
+ pastOrders.forEach(order=>{
+  if(order.includes(itemName)){
+    order.forEach(i=>{
+      if(i!==itemName){
+        freq[i]=(freq[i]||0)+1;
+      }
+    });
+  }
+ });
+
+ return Object.entries(freq)
+   .sort((a,b)=>b[1]-a[1])
+   .map(x=>x[0])
+   .slice(0,3);
+}
+
+
+/* SHOW RECOMMEND */
+function showRecommendations(itemName){
+
+ let recs = getRecommendations(itemName);
+
+ let html = "<h3>🔥 Frequently Bought Together</h3><div style='display:flex;gap:10px;'>";
+
+ recs.forEach(name=>{
+  let p = products.find(x=>x.name===name);
+  if(p){
+    html+=`
+    <div style="background:white;padding:10px;border-radius:10px;width:120px;">
+      <img src="${p.img}" style="width:100%;height:80px;border-radius:8px;">
+      <p>${p.name}</p>
+      <button onclick="add(${p.id})">Add</button>
+    </div>`;
+  }
+ });
+
+ html+="</div>";
+
+ recommend.innerHTML = html;
+}
+
+render();
+
+</script>
+
+</body>
+</html>
