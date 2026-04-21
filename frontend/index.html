@@ -3,73 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Food App AI</title>
+<title>Food AI App</title>
 
 <style>
-body { margin:0; font-family:Segoe UI; background:#f7f8fa; }
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f9}
 
 /* AUTH */
-#auth {
-  height:100vh; display:flex; justify-content:center; align-items:center;
-  background:linear-gradient(135deg,#0c831f,#00b894);
-}
-.box {
-  background:white; padding:25px; border-radius:12px; width:300px; text-align:center;
-}
-.box input {
-  width:100%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #ccc;
-}
-.box button {
-  width:100%; padding:10px; background:#0c831f; color:white; border:none; border-radius:8px;
-}
-.toggle { color:blue; cursor:pointer; }
+#auth{height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#0c831f,#00c853)}
+.box{background:#fff;padding:30px;border-radius:16px;width:320px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2)}
+.box h2{margin-bottom:10px}
+.box input{width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc}
+.box button{width:100%;padding:12px;background:#0c831f;color:#fff;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
+.toggle{margin-top:10px;color:#0c831f;cursor:pointer}
 
 /* HEADER */
-header {
-  background:#0c831f; color:white; padding:15px;
-  display:flex; justify-content:space-between;
-}
+header{background:#0c831f;color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center}
+header h3{margin:0}
+header button{background:#fff;color:#0c831f;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
 
 /* GRID */
-.container {
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-  gap:10px; padding:10px;
-}
-.card {
-  background:white; padding:10px; border-radius:10px;
-  box-shadow:0 3px 8px rgba(0,0,0,0.08);
-}
-.card img {
-  width:100%; height:100px; border-radius:8px;
-}
+.container{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:15px;padding:15px}
+.card{background:#fff;padding:10px;border-radius:14px;box-shadow:0 5px 15px rgba(0,0,0,0.08);transition:0.2s}
+.card:hover{transform:translateY(-5px)}
+.card img{width:100%;height:110px;border-radius:10px;object-fit:cover}
+.card h4{margin:8px 0 4px}
+.card p{margin:0 0 8px;color:#555}
 
-/* BUTTONS */
-.btn { background:#0c831f; color:white; border:none; padding:5px 10px; border-radius:5px; }
-.qty { display:flex; justify-content:space-between; }
+.btn{background:#0c831f;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
+.qty{display:flex;justify-content:space-between;align-items:center}
 
 /* CART BAR */
-.cart-bar {
-  position:fixed; bottom:0; width:100%;
-  background:#0c831f; color:white; padding:10px;
-  display:none; justify-content:space-between;
-}
+.cart-bar{position:fixed;bottom:0;width:100%;background:#0c831f;color:#fff;padding:12px;display:none;justify-content:space-between;align-items:center}
+.cart-bar button{background:#fff;color:#0c831f;border:none;padding:8px 12px;border-radius:8px}
 
 /* CART */
-#cartPage { display:none; padding:15px; }
+#cartPage{display:none;padding:20px}
+#bill p{margin:8px 0}
 
 /* RECOMMEND */
-#recommend {
-  padding:10px;
-}
+#recommend{padding:10px}
+.rec-box{display:flex;gap:10px;overflow:auto}
+.rec-card{background:#fff;padding:10px;border-radius:12px;min-width:120px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,0.1)}
+.rec-card img{width:100%;height:80px;border-radius:8px}
 </style>
 </head>
 
 <body>
 
-<!-- AUTH -->
 <div id="auth">
   <div class="box">
-    <h3 id="title">Login</h3>
+    <h2 id="title">Login</h2>
     <input id="username" placeholder="Username">
     <input id="password" type="password" placeholder="Password">
     <button onclick="handleAuth()">Submit</button>
@@ -77,232 +60,176 @@ header {
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none">
 
 <header>
-  <h3>Food App</h3>
+  <h3>🍔 Food AI</h3>
   <button onclick="logout()">Logout</button>
 </header>
 
-<!-- RECOMMEND -->
 <div id="recommend"></div>
-
 <div id="home" class="container"></div>
 
 <div class="cart-bar" id="cartBar">
   <span id="cartInfo"></span>
-  <button onclick="showCart()">Cart</button>
+  <button onclick="showCart()">View Cart</button>
 </div>
 
 <div id="cartPage">
+  <h2>Your Cart</h2>
   <div id="bill"></div>
-  <button onclick="placeOrder()">Place Order</button>
+  <button class="btn" onclick="placeOrder()">Place Order</button>
 </div>
 
 </div>
 
 <script>
+const API = "http://localhost:5000";
+let isLogin=true;
 
-/* AUTH */
-let isLogin = true;
-
-function toggleMode(){
-  isLogin = !isLogin;
-  title.innerText = isLogin ? "Login" : "Signup";
-}
+function toggleMode(){isLogin=!isLogin;title.innerText=isLogin?"Login":"Signup"}
 
 function handleAuth(){
-  let u = username.value;
-  let p = password.value;
-
-  let users = JSON.parse(localStorage.getItem("users") || "[]");
-
-  if(isLogin){
-    let user = users.find(x=>x.u===u && x.p===p);
-    if(user){
-      localStorage.setItem("currentUser", u);
-      startApp();
-    } else alert("Invalid login");
-  } else {
-    users.push({u,p});
-    localStorage.setItem("users", JSON.stringify(users));
-    alert("Signup success");
-    toggleMode();
-  }
+ let u=username.value,p=password.value;
+ let users=JSON.parse(localStorage.getItem("users")||"[]");
+ if(isLogin){
+  let user=users.find(x=>x.u===u&&x.p===p);
+  if(user){localStorage.setItem("currentUser",u);startApp();}
+  else alert("Invalid login");
+ }else{
+  users.push({u,p});
+  localStorage.setItem("users",JSON.stringify(users));
+  alert("Signup success");toggleMode();
+ }
 }
 
-function startApp(){
-  auth.style.display="none";
-  app.style.display="block";
-}
+function startApp(){auth.style.display="none";app.style.display="block"}
+function logout(){localStorage.removeItem("currentUser");location.reload()}
+if(localStorage.getItem("currentUser"))startApp();
 
-function logout(){
-  localStorage.removeItem("currentUser");
-  location.reload();
-}
-
-if(localStorage.getItem("currentUser")) startApp();
-
-
-/* PRODUCTS */
-let products = [
- {id:1,name:"Apple",price:50,img:"https://source.unsplash.com/200x200/?apple"},
- {id:2,name:"Banana",price:30,img:"https://source.unsplash.com/200x200/?banana"},
- {id:3,name:"Pizza",price:120,img:"https://source.unsplash.com/200x200/?pizza"},
- {id:4,name:"Burger",price:90,img:"https://source.unsplash.com/200x200/?burger"},
- {id:5,name:"Juice",price:60,img:"https://source.unsplash.com/200x200/?juice"},
- {id:6,name:"Fries",price:80,img:"https://source.unsplash.com/200x200/?fries"}
+let products=[
+{id:1,name:"Apple",price:50,img:"https://source.unsplash.com/200x200/?apple"},
+{id:2,name:"Banana",price:30,img:"https://source.unsplash.com/200x200/?banana"},
+{id:3,name:"Pizza",price:120,img:"https://source.unsplash.com/200x200/?pizza"},
+{id:4,name:"Burger",price:90,img:"https://source.unsplash.com/200x200/?burger"},
+{id:5,name:"Juice",price:60,img:"https://source.unsplash.com/200x200/?juice"},
+{id:6,name:"Fries",price:80,img:"https://source.unsplash.com/200x200/?fries"}
 ];
 
-/* DYNAMIC ORDERS */
-let pastOrders = JSON.parse(localStorage.getItem("orders")) || [
-  ["Apple","Banana","Juice"],
-  ["Pizza","Burger"]
-];
+let cart=[];
 
-let cart = [];
-let current = products;
-
-
-/* RENDER */
 function render(){
  let html="";
- current.forEach(p=>{
-  let item = cart.find(c=>c.id===p.id);
-
-  html += `
-  <div class="card">
+ products.forEach(p=>{
+  let item=cart.find(c=>c.id===p.id);
+  html+=`<div class="card">
     <img src="${p.img}">
     <h4>${p.name}</h4>
     <p>₹${p.price}</p>
-    ${
-      item ?
-      `<div class="qty">
-        <button onclick="change(${p.id},-1)">-</button>
-        ${item.qty}
-        <button onclick="change(${p.id},1)">+</button>
-      </div>`
-      :
-      `<button class="btn" onclick="add(${p.id})">Add</button>`
-    }
+    ${item?`<div class="qty"><button onclick="change(${p.id},-1)">-</button>${item.qty}<button onclick="change(${p.id},1)">+</button></div>`:`<button class="btn" onclick="add(${p.id})">Add</button>`}
   </div>`;
  });
-
- home.innerHTML = html;
+ home.innerHTML=html;
  updateCart();
 }
 
-
-/* CART */
 function add(id){
- let p = products.find(x=>x.id===id);
- cart.push({...p,qty:1});
-
- showRecommendations(p.name); // 🔥
-
- render();
+ let p=products.find(x=>x.id===id);
+ let ex=cart.find(x=>x.id===id);
+ if(ex) ex.qty++; else cart.push({...p,qty:1});
+ render();showRecommendations();
 }
 
 function change(id,val){
- let item = cart.find(x=>x.id===id);
- item.qty += val;
- if(item.qty<=0) cart = cart.filter(x=>x.id!==id);
- render();
+ let item=cart.find(x=>x.id===id);
+ item.qty+=val;
+ if(item.qty<=0)cart=cart.filter(x=>x.id!==id);
+ render();showRecommendations();
 }
 
 function updateCart(){
- let count = cart.reduce((a,b)=>a+b.qty,0);
- let total = cart.reduce((a,b)=>a+b.price*b.qty,0);
-
- if(count>0){
-   cartBar.style.display="flex";
-   cartInfo.innerText = count+" items | ₹"+total;
- } else cartBar.style.display="none";
+ let count=cart.reduce((a,b)=>a+b.qty,0);
+ let total=cart.reduce((a,b)=>a+b.price*b.qty,0);
+ if(count>0){cartBar.style.display="flex";cartInfo.innerText=count+" items | ₹"+total}
+ else cartBar.style.display="none";
 }
 
-
-/* CART PAGE */
 function showCart(){
  home.style.display="none";
  cartPage.style.display="block";
-
+ recommend.innerHTML="";
  let total=0,html="";
- cart.forEach(c=>{
-  total+=c.price*c.qty;
-  html+=`<p>${c.name} x ${c.qty} = ₹${c.price*c.qty}</p>`;
- });
-
+ cart.forEach(c=>{total+=c.price*c.qty;html+=`<p>${c.name} x ${c.qty} = ₹${c.price*c.qty}</p>`});
  html+=`<hr><h3>Total ₹${total+30}</h3>`;
  bill.innerHTML=html;
 }
 
+// ✅ FIXED PLACE ORDER
+async function placeOrder() {
 
-/* SAVE ORDER */
-function placeOrder(){
+  const userId = localStorage.getItem("currentUser");
 
- let order = cart.map(i=>i.name);
-
- let orders = JSON.parse(localStorage.getItem("orders")) || [];
- orders.push(order);
- localStorage.setItem("orders", JSON.stringify(orders));
-
- alert("Order placed 🚀");
-
- cart=[];
- location.reload();
-}
-
-
-/* APRIORI LOGIC */
-function getRecommendations(itemName){
- let freq = {};
-
- pastOrders = JSON.parse(localStorage.getItem("orders")) || pastOrders;
-
- pastOrders.forEach(order=>{
-  if(order.includes(itemName)){
-    order.forEach(i=>{
-      if(i!==itemName){
-        freq[i]=(freq[i]||0)+1;
-      }
-    });
+  if (!userId) {
+    alert("Login required");
+    return;
   }
+
+  if (cart.length === 0) {
+    alert("Cart is empty");
+    return;
+  }
+
+  // 🔥 SAFE ITEMS (NO NULL CRASH)
+  const items = cart
+    .filter(i => i && i.name)
+    .map(i => i.name);
+
+  console.log("SENDING:", { userId, items });
+
+  const res = await fetch("http://localhost:5000/order", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ userId, items })
+  });
+
+  const data = await res.json();
+  console.log("RESPONSE:", data);
+
+  alert(data.message || data.error);
+}
+// 🔥 RECOMMEND
+async function showRecommendations(){
+ let userId=localStorage.getItem("currentUser");
+ let cartItems=cart.map(i=>i.name);
+ if(cartItems.length===0){recommend.innerHTML="";return}
+
+ let res=await fetch(API+"/recommend",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({userId,cart:cartItems})
  });
 
- return Object.entries(freq)
-   .sort((a,b)=>b[1]-a[1])
-   .map(x=>x[0])
-   .slice(0,3);
-}
+ let data=await res.json();
 
-
-/* SHOW RECOMMEND */
-function showRecommendations(itemName){
-
- let recs = getRecommendations(itemName);
-
- let html = "<h3>🔥 Frequently Bought Together</h3><div style='display:flex;gap:10px;'>";
-
- recs.forEach(name=>{
-  let p = products.find(x=>x.name===name);
+ let html="<h3>🔥 Recommended for You</h3><div class='rec-box'>";
+ data.recommendations.forEach(name=>{
+  let p=products.find(x=>x.name===name);
   if(p){
-    html+=`
-    <div style="background:white;padding:10px;border-radius:10px;width:120px;">
-      <img src="${p.img}" style="width:100%;height:80px;border-radius:8px;">
+    html+=`<div class='rec-card'>
+      <img src='${p.img}'>
       <p>${p.name}</p>
-      <button onclick="add(${p.id})">Add</button>
+      <button class='btn' onclick='add(${p.id})'>Add</button>
     </div>`;
   }
  });
-
  html+="</div>";
 
- recommend.innerHTML = html;
+ recommend.innerHTML=html;
 }
 
 render();
-
 </script>
 
 </body>
