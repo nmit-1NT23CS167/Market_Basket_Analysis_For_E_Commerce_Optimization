@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "IntelliGrocery PostgreSQL",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "intelligrocery",
+      "Username": "intelligrocery",
+      "Password": "IntelliGrocery@2024",
+      "SSLMode": "prefer",
+      "Comment": "Main e-commerce database"
+    }
+  }
+}

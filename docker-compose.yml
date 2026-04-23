@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database - Single Container Setup
+  postgres:
+    image: postgres:15-alpine
+    container_name: intelligrocery_db
+    environment:
+      POSTGRES_USER: intelligrocery
+      POSTGRES_PASSWORD: IntelliGrocery@2024
+      POSTGRES_DB: intelligrocery
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intelligrocery"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  intelligrocery_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
