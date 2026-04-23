@@ -687,7 +687,7 @@ elif page == "👥 User Management":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "📊 Exploratory Analysis":
     st.markdown("## 📊 Exploratory Data Analysis")
-    st.caption("Mirrors notebook Section 2 — dataset overview & visual exploration")
+    st.caption("dataset overview & visual exploration")
 
     # KPIs
     c1,c2,c3,c4,c5 = st.columns(5)
@@ -760,7 +760,7 @@ elif page == "📊 Exploratory Analysis":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🔢 Transaction Encoding":
     st.markdown("## 🔢 Transaction Encoding & Preprocessing")
-    st.caption("Notebook Section 3 — data cleaning, basket building, sparse matrix visualisation")
+    st.caption("data cleaning, basket building, sparse matrix visualisation")
 
     c1,c2,c3,c4 = st.columns(4)
     with c1: kpi("Raw Transactions", f"{len(transactions):,}", "After cleaning","blue")
@@ -837,7 +837,7 @@ elif page == "🔢 Transaction Encoding":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "⚙️ Apriori Mining":
     st.markdown("## ⚙️ Apriori Algorithm Mining")
-    st.caption("Notebook Sections 4 & 5 — pass-by-pass trace, pruning efficiency, frequent itemsets")
+    st.caption("pass-by-pass trace, pruning efficiency, frequent itemsets")
 
     c1,c2,c3,c4 = st.columns(4)
     with c1: kpi("Transactions",    f"{engine._stats['n_transactions']:,}", "Input",     "blue")
@@ -864,7 +864,7 @@ elif page == "⚙️ Apriori Mining":
                          unsafe_allow_html=True)
 
     if not pass_stats.empty:
-        section("📊 Pass-by-Pass Statistics (Notebook Fig 3a, 3b, 3c)")
+        section("📊 Pass-by-Pass Statistics")
         col1, col2, col3 = st.columns(3)
 
         # (a) Candidates vs Frequent
@@ -920,7 +920,7 @@ elif page == "⚙️ Apriori Mining":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "📐 Rules Analysis":
     st.markdown("## 📐 Association Rules Analysis")
-    st.caption("Notebook Section 6 — support/confidence/lift landscape (Figs A–F)")
+    st.caption("support/confidence/lift landscape (Figs A–F)")
 
     if rules_df.empty:
         st.warning("⚠️ No rules found. Lower the thresholds in the sidebar.")
@@ -1120,7 +1120,7 @@ elif page == "🎯 Recommendation Engine":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🔄 Incremental Learning":
     st.markdown("## 🔄 Incremental Learning Simulation")
-    st.caption("Notebook Section 8 — simulate new purchases, track rule evolution")
+    st.caption("simulate new purchases, track rule evolution")
 
     st.info("""When a customer completes a purchase the engine:
 1. Appends the transaction   2. Refits Apriori   3. Regenerates all rules   4. New rules activate immediately""")
@@ -1165,7 +1165,7 @@ elif page == "🔄 Incremental Learning":
             st.dataframe(hist_df, use_container_width=True)
 
             # Plots — notebook Fig 8a, 8b, 8c
-            section("📈 Rule Evolution Charts (Notebook Fig 8)")
+            section("📈 Rule Evolution Charts")
             c1, c2, c3 = st.columns(3)
             x = hist_df["Purchase #"]
 
@@ -1372,7 +1372,7 @@ elif page == "⚡ Real-Time Simulation":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🏆 Optimization Summary":
     st.markdown("## 🏆 Optimization Summary Dashboard")
-    st.caption("Notebook Sections 10 & 11 — all 9 optimisations + project summary charts")
+    st.caption("all 9 optimisations + project summary charts")
 
     OPTIMISATIONS = [
         ("Anti-monotone pruning",     "Apriori property eliminates 90–99%+ of candidates",      "95.2%", "Candidates reduced"),
@@ -1400,7 +1400,7 @@ elif page == "🏆 Optimization Summary":
                         unsafe_allow_html=True)
 
     # Project summary dashboard (Notebook Section 11.1)
-    section("📊 Project Summary Dashboard (Notebook Fig 11)")
+    section("📊 Project Summary Dashboard ")
 
     col1, col2 = st.columns(2)
 
