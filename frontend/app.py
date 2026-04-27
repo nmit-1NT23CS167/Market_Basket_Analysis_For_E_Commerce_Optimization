@@ -98,7 +98,7 @@ html,body,[class*="css"]{font-family:'Inter',sans-serif;}
 try:
     init_db()
 except Exception as db_err:
-    st.error("PostgreSQL connection failed. Update DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, and DB_NAME in your environment.")
+    st.error("PostgreSQL connection failed. On Render, add a PostgreSQL database and set DATABASE_URL, or configure DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, and DB_NAME.")
     st.code(str(db_err))
     st.stop()
 

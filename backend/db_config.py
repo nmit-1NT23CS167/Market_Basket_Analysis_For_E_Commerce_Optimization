@@ -3,6 +3,9 @@ import os
 from typing import List, Dict
 
 
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URI")
+
+
 DB_CONFIG = {
     "engine": "postgresql",
     "host": os.getenv("DB_HOST", "localhost"),
@@ -12,7 +15,7 @@ DB_CONFIG = {
     "database": os.getenv("DB_NAME", "intelligrocery"),
 }
 
-DB_CONNECTION_STRING = (
+DB_CONNECTION_STRING = DATABASE_URL or (
     f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@"
     f"{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
 )
@@ -82,6 +85,13 @@ def get_db_connection():
     import psycopg2
 
     last_err = None
+
+    if DATABASE_URL:
+        try:
+            return psycopg2.connect(DATABASE_URL)
+        except Exception as exc:
+            last_err = exc
+
     for cfg in _candidate_db_configs():
         try:
             return psycopg2.connect(
@@ -96,7 +106,8 @@ def get_db_connection():
 
     raise RuntimeError(
         "Unable to connect to PostgreSQL with configured or fallback profiles. "
-        "Set DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME in your environment. "
+        "On Render, add a PostgreSQL database service and set DATABASE_URL, or set "
+        "DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME in your environment. "
         f"Last error: {last_err}"
     )
 
