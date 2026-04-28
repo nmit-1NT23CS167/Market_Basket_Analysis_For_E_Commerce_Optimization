@@ -630,11 +630,13 @@ def render_product_management(ALL_ITEMS, PRICE_MAP, CAT_MAP):
         st.markdown("### Inventory Management")
         
         # Mock inventory data
+        num_items = min(10, len(ALL_ITEMS))  # Ensure we don't exceed available items
+        products = list(ALL_ITEMS)[:num_items]
         inventory_data = {
-            'Product': list(ALL_ITEMS)[:10],
-            'Stock': np.random.randint(5, 200, 10),
-            'Reorder Level': np.random.randint(20, 50, 10),
-            'Status': ['In Stock'] * 8 + ['Low Stock', 'Critical']
+            'Product': products,
+            'Stock': np.random.randint(5, 200, num_items),
+            'Reorder Level': np.random.randint(20, 50, num_items),
+            'Status': ['In Stock'] * (num_items - 2) + (['Low Stock', 'Critical'] if num_items >= 2 else [])
         }
         inventory_df = pd.DataFrame(inventory_data)
         

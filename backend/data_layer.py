@@ -431,6 +431,19 @@ def insert_rt_transaction(items):
     bill = f"RT{int(datetime.now().timestamp())}"
     ts = datetime.now()
 
+    # Choose a country for this real-time bill. If an imported dataset exists
+    # use one of the countries present there; otherwise fall back to United Kingdom.
+    try:
+        c.execute("SELECT DISTINCT Country FROM transactions WHERE Country IS NOT NULL")
+        countries = [row[0] for row in c.fetchall() if row[0]]
+    except Exception:
+        countries = []
+
+    if countries:
+        country_for_bill = random.choice(countries)
+    else:
+        country_for_bill = "United Kingdom"
+
     rows = [
         (
             bill,
@@ -438,7 +451,7 @@ def insert_rt_transaction(items):
             random.randint(1, 6),
             float(price_map.get(item, PRICE_MAP.get(item, 5.0))),
             ts,
-            "United Kingdom",
+            country_for_bill,
             category_map.get(item, CAT_MAP.get(item, "Other")),
         )
         for item in items
