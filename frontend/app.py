@@ -398,6 +398,13 @@ def plot_cfg(fig, h=340):
     text_color = "#e5e7eb" if dark else "#0f172a"
     grid_color = "rgba(148,163,184,0.22)" if dark else "#e2e8f0"
     bg_color = "#0f172a" if dark else "white"
+    # Ensure any literal 'undefined' title text is cleared to avoid Plotly rendering 'undefined'
+    try:
+        current_title = getattr(getattr(fig.layout, 'title', None), 'text', None)
+    except Exception:
+        current_title = None
+    if current_title is None or str(current_title).lower() in ("undefined", "none"):
+        fig.update_layout(title_text="")
 
     fig.update_layout(
         height=h,
