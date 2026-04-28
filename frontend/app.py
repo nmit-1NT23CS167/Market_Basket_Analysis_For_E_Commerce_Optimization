@@ -299,15 +299,29 @@ def _empty_txn_df():
 
 @st.cache_data(ttl=300, show_spinner=False)
 def load_product_catalog():
-    """Load the current product catalog from the database."""
+    """Load the current product catalog from the database.
+
+    The database can contain user-added products and/or imported dataset rows.
+    The built-in catalogue acts as a fallback baseline so a fresh deployment
+    still renders the full shop even before the dataset import runs.
+    """
     products_df = get_products_df()
 
     if products_df.empty:
         return sorted(ALL_ITEMS), dict(PRICE_MAP), dict(CAT_MAP)
 
-    items = products_df["name"].dropna().astype(str).tolist()
-    prices = dict(zip(products_df["name"], products_df["price"]))
-    categories = dict(zip(products_df["name"], products_df["category"]))
+    items = set(ALL_ITEMS)
+    prices = dict(PRICE_MAP)
+    categories = dict(CAT_MAP)
+
+    for row in products_df.itertuples(index=False):
+        name = str(row.name).strip()
+        if not name:
+            continue
+        items.add(name)
+        prices[name] = float(row.price)
+        categories[name] = str(row.category)
+
     return sorted(items), prices, categories
 
 
